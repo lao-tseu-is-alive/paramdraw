@@ -20,14 +20,16 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt4.QtGui import QAction, QIcon
+from PyQt4.QtCore import QObject, QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from PyQt4.QtGui import QAction, QIcon, QMessageBox
+from qgis.gui import *
+from qgis.gui import QgsMapTool, QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
 import resources
 
 # Import the code for the DockWidget
 from parametric_draw_dockwidget import Parametric_DrawDockWidget
-from point_tool import PointTool
+#from point_tool import PointTool
 import os.path
 
 
@@ -44,7 +46,7 @@ class Parametric_Draw:
         """
         # Save reference to the QGIS interface
         self.iface = iface
-        self.tool = PointTool(self.iface.mapCanvas())
+
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -235,4 +237,38 @@ class Parametric_Draw:
             self.dockwidget.show()
 
     def get_point(self):
-        self.iface.mapCanvas().setMapTool(self.tool)
+        self.pointEmitter = QgsMapToolEmitPoint(self.iface.mapCanvas())
+        #QObject.connect(self.pointEmitter, SIGNAL("canvasClicked(const QgsPoint, Qt::MouseButton)"), self.selectNow)
+        self.pointEmitter.canvasClicked.connect(self.retrieve_point_value)
+        self.iface.mapCanvas().setMapTool(self.pointEmitter)
+
+
+    def retrieve_point_value(self, point, button):
+        print("Inside retrieve_point_value Clicked coords", " x: " + str(point.x()) + " Y: " + str(point.y()) )
+        #TODO find the correct way to reference widget inside dock
+        #self.dockwidget.gridLayout_2.x_edit.setText(str(point.x()))
+        #self.dockwidget.gridLayout_2.y_edit.setText(str(point.x()))
+
+        # layer = self.iface.activeLayer()
+        # if not layer or layer.type() != QgsMapLayer.VectorLayer:
+        #     QMessageBox.warning(None, "No!", "Select a vector layer")
+        #     return
+        #
+        # width = self.iface.mapCanvas().mapUnitsPerPixel() * 2
+        # rect = QgsRectangle(point.x() - width,
+        #                     point.y() - width,
+        #                     point.x() + width,
+        #                     point.y() + width)
+        #
+        # rect = self.iface.mapCanvas().mapRenderer().mapToLayerCoordinates(layer, rect)
+        #
+        # layer.select([], rect)
+        # feat = QgsFeature()
+        #
+        # ids = []
+        # while layer.nextFeature(feat):
+        #     ids.append(feat.id())
+        #
+        # layer.setSelectedFeatures(ids)
+
+

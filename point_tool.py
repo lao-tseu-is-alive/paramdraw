@@ -10,11 +10,10 @@ from PyQt4.QtGui import QAction, QIcon
 from qgis.gui import *
 
 
-class PointTool(QgsMapToolEmitPoint):
+class PointTool(QgsMapTool):
     def __init__(self, canvas):
         QgsMapTool.__init__(self, canvas)
         self.canvas = canvas
-        print("Inside PointTool")
 
     def canvasPressEvent(self, event):
         pass
