@@ -21,7 +21,7 @@
  ***************************************************************************/
 """
 from PyQt4.QtCore import QObject, QSettings, QTranslator, qVersion, QCoreApplication, Qt
-from PyQt4.QtGui import QAction, QIcon, QMessageBox
+from PyQt4.QtGui import QAction, QIcon, QMessageBox, QLineEdit
 from qgis.gui import *
 from qgis.gui import QgsMapTool, QgsMapToolEmitPoint
 # Initialize Qt resources from file resources.py
@@ -237,8 +237,10 @@ class Parametric_Draw:
             self.dockwidget.show()
 
     def get_point(self):
+        if self.dockwidget is None:
+            self.run()
+
         self.pointEmitter = QgsMapToolEmitPoint(self.iface.mapCanvas())
-        #QObject.connect(self.pointEmitter, SIGNAL("canvasClicked(const QgsPoint, Qt::MouseButton)"), self.selectNow)
         self.pointEmitter.canvasClicked.connect(self.retrieve_point_value)
         self.iface.mapCanvas().setMapTool(self.pointEmitter)
 
@@ -246,8 +248,12 @@ class Parametric_Draw:
     def retrieve_point_value(self, point, button):
         print("Inside retrieve_point_value Clicked coords", " x: " + str(point.x()) + " Y: " + str(point.y()) )
         #TODO find the correct way to reference widget inside dock
-        #self.dockwidget.gridLayout_2.x_edit.setText(str(point.x()))
+        #self.my_x = self.dockwidget.getChild(QLineEdit,"x_edit")
+        #self.my_x.setText(str(point.x()))
+
         #self.dockwidget.gridLayout_2.y_edit.setText(str(point.x()))
+        self.dockwidget.x_edit.setText(str(point.x()))
+        self.dockwidget.y_edit.setText(str(point.y()))
 
         # layer = self.iface.activeLayer()
         # if not layer or layer.type() != QgsMapLayer.VectorLayer:
