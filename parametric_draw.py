@@ -30,6 +30,7 @@ import resources
 
 # Import the code for the DockWidget
 from parametric_draw_dockwidget import Parametric_DrawDockWidget
+from identify_feature import IdentifyFeature
 # from point_tool import PointTool
 import os.path
 
@@ -184,6 +185,20 @@ class Parametric_Draw:
             enabled_flag=False,
             checkable_flag=True)
 
+        self.add_action(
+            icon_path,
+            text=self.tr(u'Select Shape '),
+            callback=self.select_shape,
+            parent=self.iface.mainWindow(),
+            enabled_flag=False,
+            checkable_flag=True)
+
+        self.identify_tool = IdentifyFeature(self.iface.mapCanvas())
+        self.identify_tool.deactivated.connect(self.select_shape_uncheck)
+        self.pointEmitter = QgsMapToolEmitPoint(self.iface.mapCanvas())
+        self.pointEmitter.canvasClicked.connect(self.retrieve_point_value)
+        self.pointEmitter.deactivated.connect(self.point_emitter_uncheck)
+
     # --------------------------------------------------------------------------
 
     def onClosePlugin(self):
@@ -239,15 +254,12 @@ class Parametric_Draw:
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
             self.actions[1].setEnabled(True)
+            self.actions[2].setEnabled(True)
             self.dockwidget.show()
 
     def get_point(self):
         if self.dockwidget is None:
             self.run()
-
-        self.pointEmitter = QgsMapToolEmitPoint(self.iface.mapCanvas())
-        self.pointEmitter.canvasClicked.connect(self.retrieve_point_value)
-        self.pointEmitter.deactivated.connect(self.point_emitter_uncheck)
         self.iface.mapCanvas().setMapTool(self.pointEmitter)
 
     def retrieve_point_value(self, point, button):
@@ -268,10 +280,10 @@ class Parametric_Draw:
             QMessageBox.warning(None, "No!", "Select a vector layer")
             return
 
-        rect = QgsRectangle(point.x() - width,
-                            point.y() - height,
-                            point.x() + width,
-                            point.y() + height)
+        rect = QgsRectangle(point.x() - width / 2.0,
+                            point.y() - height / 2.0,
+                            point.x() + width / 2.0,
+                            point.y() + height / 2.0)
 
         rect = self.iface.mapCanvas().mapRenderer().mapToLayerCoordinates(layer, rect)
         caps = layer.dataProvider().capabilities()
@@ -288,3 +300,10 @@ class Parametric_Draw:
 
     def point_emitter_uncheck(self):
         self.actions[1].setChecked(False)
+
+    def select_shape(self):
+        self.iface.mapCanvas().setMapTool(self.identify_tool)
+
+    def select_shape_uncheck(self):
+        self.actions[2].setChecked(False)
+
