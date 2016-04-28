@@ -170,7 +170,7 @@ class Parametric_Draw:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
+        # TODO stocker les differentes actions dans des variables de la classe
         icon_path = ':/plugins/Parametric_Draw/icon.png'
         self.add_action(
             icon_path,
