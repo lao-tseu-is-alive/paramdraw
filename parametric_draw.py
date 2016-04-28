@@ -22,8 +22,9 @@
 """
 from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from PyQt4.QtGui import QAction, QIcon, QMessageBox, QLineEdit
-from qgis.gui import *
 from qgis.gui import QgsMapTool, QgsMapToolEmitPoint
+from qgis.core import QgsMapLayer, QgsRectangle, QgsFeature
+from qgis.core import QgsVectorDataProvider, QgsGeometry
 # Initialize Qt resources from file resources.py
 import resources
 
@@ -97,6 +98,7 @@ class Parametric_Draw:
             text,
             callback,
             enabled_flag=True,
+            checkable_flag=False,
             add_to_menu=True,
             add_to_toolbar=True,
             status_tip=None,
@@ -145,6 +147,7 @@ class Parametric_Draw:
         action = QAction(icon, text, parent)
         action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
+        action.setCheckable(checkable_flag)
 
         if status_tip is not None:
             action.setStatusTip(status_tip)
@@ -177,7 +180,9 @@ class Parametric_Draw:
             icon_path,
             text=self.tr(u'Insert Point'),
             callback=self.get_point,
-            parent=self.iface.mainWindow())
+            parent=self.iface.mainWindow(),
+            enabled_flag=False,
+            checkable_flag=True)
 
     # --------------------------------------------------------------------------
 
@@ -233,6 +238,7 @@ class Parametric_Draw:
             # show the dockwidget
             # TODO: fix to allow choice of dock location
             self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dockwidget)
+            self.actions[1].setEnabled(True)
             self.dockwidget.show()
 
     def get_point(self):
@@ -241,6 +247,7 @@ class Parametric_Draw:
 
         self.pointEmitter = QgsMapToolEmitPoint(self.iface.mapCanvas())
         self.pointEmitter.canvasClicked.connect(self.retrieve_point_value)
+        self.pointEmitter.deactivated.connect(self.point_emitter_uncheck)
         self.iface.mapCanvas().setMapTool(self.pointEmitter)
 
     def retrieve_point_value(self, point, button):
@@ -249,24 +256,35 @@ class Parametric_Draw:
         self.dockwidget.x_edit.setText(str(point.x()))
         self.dockwidget.y_edit.setText(str(point.y()))
 
-        # layer = self.iface.activeLayer()
-        # if not layer or layer.type() != QgsMapLayer.VectorLayer:
-        #     QMessageBox.warning(None, "No!", "Select a vector layer")
-        #     return
-        #
-        # width = self.iface.mapCanvas().mapUnitsPerPixel() * 2
-        # rect = QgsRectangle(point.x() - width,
-        #                     point.y() - width,
-        #                     point.x() + width,
-        #                     point.y() + width)
-        #
-        # rect = self.iface.mapCanvas().mapRenderer().mapToLayerCoordinates(layer, rect)
-        #
-        # layer.select([], rect)
-        # feat = QgsFeature()
-        #
-        # ids = []
-        # while layer.nextFeature(feat):
-        #     ids.append(feat.id())
-        #
-        # layer.setSelectedFeatures(ids)
+        try:
+            width = float(self.dockwidget.width_edit.text())
+            height = float(self.dockwidget.height_edit.text())
+        except ValueError:
+            QMessageBox.warning(None, "No!", "Insert float values")
+            return
+
+        layer = self.iface.activeLayer()
+        if not layer or layer.type() != QgsMapLayer.VectorLayer:
+            QMessageBox.warning(None, "No!", "Select a vector layer")
+            return
+
+        rect = QgsRectangle(point.x() - width,
+                            point.y() - height,
+                            point.x() + width,
+                            point.y() + height)
+
+        rect = self.iface.mapCanvas().mapRenderer().mapToLayerCoordinates(layer, rect)
+        caps = layer.dataProvider().capabilities()
+
+        print(rect.asWktPolygon())
+        if caps & QgsVectorDataProvider.AddFeatures:
+            feat = QgsFeature()
+            # feat.addAttribute(0, 'hello')
+            feat.setGeometry(QgsGeometry.fromWkt(rect.asWktPolygon()))
+            (res, outFeats) = layer.dataProvider().addFeatures([feat])
+            layer.triggerRepaint()
+            # self.iface.mapCanvas().refresh()
+
+
+    def point_emitter_uncheck(self):
+        self.actions[1].setChecked(False)
