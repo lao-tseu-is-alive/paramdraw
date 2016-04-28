@@ -20,7 +20,7 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt4.QtCore import QObject, QSettings, QTranslator, qVersion, QCoreApplication, Qt
+from PyQt4.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from PyQt4.QtGui import QAction, QIcon, QMessageBox, QLineEdit
 from qgis.gui import *
 from qgis.gui import QgsMapTool, QgsMapToolEmitPoint
@@ -29,7 +29,7 @@ import resources
 
 # Import the code for the DockWidget
 from parametric_draw_dockwidget import Parametric_DrawDockWidget
-#from point_tool import PointTool
+# from point_tool import PointTool
 import os.path
 
 
@@ -46,7 +46,6 @@ class Parametric_Draw:
         """
         # Save reference to the QGIS interface
         self.iface = iface
-
 
         # initialize plugin directory
         self.plugin_dir = os.path.dirname(__file__)
@@ -224,7 +223,7 @@ class Parametric_Draw:
             # dockwidget may not exist if:
             #    first run of plugin
             #    removed on close (see self.onClosePlugin method)
-            if self.dockwidget == None:
+            if self.dockwidget is None:
                 # Create the dockwidget (after translation) and keep reference
                 self.dockwidget = Parametric_DrawDockWidget()
 
@@ -244,14 +243,9 @@ class Parametric_Draw:
         self.pointEmitter.canvasClicked.connect(self.retrieve_point_value)
         self.iface.mapCanvas().setMapTool(self.pointEmitter)
 
-
     def retrieve_point_value(self, point, button):
-        print("Inside retrieve_point_value Clicked coords", " x: " + str(point.x()) + " Y: " + str(point.y()) )
-        #TODO find the correct way to reference widget inside dock
-        #self.my_x = self.dockwidget.getChild(QLineEdit,"x_edit")
-        #self.my_x.setText(str(point.x()))
-
-        #self.dockwidget.gridLayout_2.y_edit.setText(str(point.x()))
+        print("retrieve_point_value Clicked coords", " x: " + str(point.x()) +
+              " Y: " + str(point.y()))
         self.dockwidget.x_edit.setText(str(point.x()))
         self.dockwidget.y_edit.setText(str(point.y()))
 
@@ -276,5 +270,3 @@ class Parametric_Draw:
         #     ids.append(feat.id())
         #
         # layer.setSelectedFeatures(ids)
-
-
