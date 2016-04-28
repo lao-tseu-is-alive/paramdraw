@@ -41,6 +41,6 @@ class IdentifyFeature(QgsMapToolIdentify):
         c = arr_Points[1].sqrDist(arr_Points[2])
         d = arr_Points[3].sqrDist(arr_Points[2])
         print(a,b,h, abs(a + b - h), c,d, abs(c + d - h))
-
+        # TODO apres le cafe retourner un QRECT ou None
         return (abs(a+b-h) < 0.1E-7) and (abs(c + d - h) < 0.1E-7)
 
